@@ -14,7 +14,7 @@ if requirements_path.is_file():
         requirements = requirements_file.read().splitlines()
 
 models_dir = module_dir / "models"
-data_files = [str(f.relative_to(module_dir)) for f in models_dir.glob("*.tflite")]
+data_files = [str(f.relative_to(module_dir)) for f in models_dir.glob("*.onnx")]
 
 version_path = module_dir / "VERSION"
 version = version_path.read_text(encoding="utf-8").strip()

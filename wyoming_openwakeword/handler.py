@@ -1,4 +1,5 @@
 """Event handler for clients of the server."""
+import os
 import argparse
 import asyncio
 import logging
@@ -215,11 +216,11 @@ class OpenWakeWordEventHandler(AsyncEventHandler):
 
 
 def ensure_loaded(state: State, names: List[str], threshold: float, trigger_level: int):
-    """Ensure wake words are loaded by name."""
+    """Ensure wake words are loaded by name or full path."""
+    import os
     with state.clients_lock, state.ww_threads_lock:
         for model_name in names:
             norm_model_name = _normalize_key(model_name)
-
             ww_state = state.wake_words.get(model_name)
             if ww_state is not None:
                 # Already loaded
@@ -232,18 +233,24 @@ def ensure_loaded(state: State, names: List[str], threshold: float, trigger_leve
                     # Exact match
                     model_path = maybe_model_path
                     break
-
                 if match := _WAKE_WORD_WITH_VERSION.match(maybe_model_path.stem):
                     # Exclude version
                     if norm_model_name == _normalize_key(match.group(1)):
                         model_path = maybe_model_path
                         state.wake_word_aliases[model_name] = model_path.stem
                         break
+                # Allow full path
+                if str(maybe_model_path) == model_name or str(maybe_model_path) == os.path.abspath(model_name):
+                    model_path = maybe_model_path
+                    norm_model_name = _normalize_key(maybe_model_path.stem)
+                    state.wake_word_aliases[model_name] = model_path.stem
+                    break
 
             if model_path is None:
+                import os
+                from pathlib import Path
                 raise ValueError(f"Wake word model not found: {model_name}")
 
-            # Start thread for model
             model_key = model_path.stem
             state.wake_words[model_key] = WakeWordState()
             state.ww_threads[model_key] = Thread(
@@ -266,7 +273,6 @@ def ensure_loaded(state: State, names: List[str], threshold: float, trigger_leve
 
             _LOGGER.debug("Started thread for %s", model_key)
 
-
 # -----------------------------------------------------------------------------
 
 
@@ -274,12 +280,12 @@ def _get_wake_word_files(state: State) -> List[Path]:
     """Get paths to all available wake word model files."""
     model_paths = [
         p
-        for p in state.models_dir.glob("*.tflite")
+        for p in state.models_dir.glob("*.onnx")
         if _WAKE_WORD_WITH_VERSION.match(p.stem)
     ]
 
     for custom_model_dir in state.custom_model_dirs:
-        model_paths.extend(custom_model_dir.glob("*.tflite"))
+        model_paths.extend(custom_model_dir.glob("*.onnx"))
 
     return model_paths
 
