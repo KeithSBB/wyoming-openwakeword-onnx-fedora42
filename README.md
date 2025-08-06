@@ -1,3 +1,20 @@
+# Wyoming openWakeWord for Fedora 42
+
+Wyoming protocol server for the openWakeWord wake word detection system, optimized for Fedora Server 42 with ONNX models.
+
+## Installation
+
+Clone the repository and run the installation script:
+
+```bash
+git clone https://github.com/KeithSBB/wyoming-openwakeword-onnx-fedora42.git
+cd wyoming-openwakeword-onnx-fedora42
+git checkout fedora-42-wyoming
+bash install.sh
+
+The rest of this readme is for the original rasspy version
+
+
 # Wyoming openWakeWord
 
 [Wyoming protocol](https://github.com/rhasspy/wyoming) server for the [openWakeWord](https://github.com/dscripka/openWakeWord) wake word detection system.
